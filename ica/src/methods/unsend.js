@@ -1,0 +1,162 @@
+/**
+ * @fileoverview NKXICA - Unsend Message API
+ * @author neoaz07 (Saifullah Neoaz)
+ * @copyright 2024 NeoKEX
+ * @license MIT
+ * @module UnsendMessage
+ * @since 1.0.0
+ */
+
+const ThreadHistory = require('./threadHistory');
+
+class UnsendMessage {
+  constructor(httpClient, options = {}) {
+    this.http = httpClient;
+    this.uuid = options.uuid;
+  }
+
+  // Unsend/delete a message
+  async unsend(messageID, threadID, callback) {
+    if (typeof threadID === 'function') {
+      callback = threadID;
+      threadID = null;
+    }
+
+    try {
+      if (!messageID) {
+        throw new Error('Message ID is required');
+      }
+
+      // ── ownership pre-check (fca/Floppa pattern) ──
+      // The send-time registry (global.botSentMessages, filled by the bot's
+      // apiWrapper on every successful send) is AUTHORITATIVE: an id listed
+      // there is always the bot's own message — unsend without further
+      // checks. The stream-echo cache (global.recentMessages) may only VETO
+      // when it positively identifies a different HUMAN sender; its absence
+      // must never block a legitimate unsend (echo overwrites and
+      // reaction-event cache entries used to make every admin unsend fail
+      // silently).
+      const inRegistry = (typeof global !== "undefined" && global.botSentMessages && typeof global.botSentMessages.values === "function")
+        ? [...global.botSentMessages.values()].some(list => Array.isArray(list) && list.includes(String(messageID)))
+        : false;
+      if (!inRegistry && typeof global !== "undefined" && global.recentMessages && global.recentMessages.get) {
+        const cached = global.recentMessages.get(String(messageID));
+        const botID = this.http?.getCookieValue?.('ds_user_id');
+        if (cached && cached.senderID && botID
+          && String(cached.senderID) !== String(botID)
+          && cached.isBot !== true) {
+          const notOurMessageErr = new Error('Cannot unsend message sent by another user');
+          if (callback) return callback(notOurMessageErr);
+          throw notOurMessageErr;
+        }
+      }
+
+      const resolvedThreadID = await this.resolveThreadID(messageID, threadID);
+      const csrfToken = this.http.getCsrfToken();
+      if (!csrfToken) {
+        throw new Error('Missing csrftoken cookie');
+      }
+
+      const response = await this.http.postForm(
+        `https://www.instagram.com/api/v1/direct_v2/threads/${resolvedThreadID}/items/${messageID}/delete/`,
+        {
+          _uuid: this.uuid,
+          _csrftoken: csrfToken
+        }
+      );
+
+      const success = response.status === 'ok';
+      
+      if (callback) return callback(null, success);
+      return success;
+    } catch (error) {
+      if (callback) return callback(error);
+      throw error;
+    }
+  }
+
+  async resolveThreadID(messageID, threadID) {
+    if (threadID) {
+      return threadID.toString();
+    }
+
+    const remembered = this.http.getRememberedThread(messageID);
+    if (remembered) {
+      return remembered;
+    }
+
+    const inbox = await this.http.get(
+      'https://www.instagram.com/api/v1/direct_v2/inbox/?visual_message_return_type=unseen&limit=50&thread_message_limit=10'
+    );
+    const threads = inbox?.inbox?.threads || [];
+    const match = threads.find((thread) =>
+      (thread.items || []).some((item) => item.item_id?.toString() === messageID.toString()) ||
+      thread.last_permanent_item?.item_id?.toString() === messageID.toString()
+    );
+
+    if (!match?.thread_id) {
+      throw new Error('Could not resolve thread ID for message');
+    }
+
+    this.http.rememberMessageThread(messageID, match.thread_id);
+    return match.thread_id.toString();
+  }
+
+  // Alias for unsend
+  delete(messageID, callback) {
+    return this.unsend(messageID, null, callback);
+  }
+
+  // Unsend multiple messages
+  async batch(messageIDs, callback) {
+    try {
+      const results = [];
+      
+      for (const messageID of messageIDs) {
+        try {
+          const success = await this.unsend(messageID);
+          results.push({ messageID, success });
+        } catch (error) {
+          results.push({ messageID, success: false, error: error.message });
+        }
+      }
+
+      const summary = {
+        successful: results.filter(r => r.success).length,
+        failed: results.filter(r => !r.success).length,
+        results
+      };
+
+      if (callback) return callback(null, summary);
+      return summary;
+    } catch (error) {
+      if (callback) return callback(error);
+      throw error;
+    }
+  }
+
+  // Unsend last message in thread
+  async unsendLast(threadID, callback) {
+    try {
+      // Get thread history to find last message from current user
+      const history = new ThreadHistory(this.http, { uuid: this.uuid });
+      
+      const messages = await history.getHistory(threadID, 10);
+      const lastMessage = messages.find(m => m.isCurrentUser === true);
+      
+      if (!lastMessage) {
+        throw new Error('No recent message found from current user');
+      }
+
+      const success = await this.unsend(lastMessage.messageID);
+      
+      if (callback) return callback(null, { success, messageID: lastMessage.messageID });
+      return { success, messageID: lastMessage.messageID };
+    } catch (error) {
+      if (callback) return callback(error);
+      throw error;
+    }
+  }
+}
+
+module.exports = UnsendMessage;
