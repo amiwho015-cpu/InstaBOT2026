@@ -17,6 +17,10 @@
   "account": {
     "proxy": null,
     "userAgent": null,
+    "deviceId": "android-c9f6ff22a741e2e6",
+    "phoneId": "6b79edb3-b36e-4a95-a14c-9d4f27982223",
+    "uuid": "a327234b-5310-46be-9a8d-7ff7c09ed675",
+    "advertisingId": "11952caa-d9cd-4281-b68e-1021eb897dde",
     "notes": "Instagram login is cookie-only. Put your Instagram cookies in account.txt: a Netscape cookie file (Cookie-Editor export), a `sessionid=...; ds_user_id=...; csrftoken=...` string, or a JSON array of cookie objects. `sessionid` and `ds_user_id` are required. `proxy` is an optional HTTP(S) proxy URL and `userAgent` overrides the default Instagram Android user agent."
   },
   "music": {
@@ -27,14 +31,14 @@
   },
   "welcome": {
     "enable": false,
-    "message": "Welcome %1 to %2! \ud83d\udc4b",
+    "message": "Welcome %1 to %2! 👋",
     "threadIDs": [],
-    "selfMessage": "Thanks for inviting me to %2 \ud83d\udc8b. Type {prefix}help to see all available commands.",
+    "selfMessage": "Thanks for inviting me to %2 💋. Type {prefix}help to see all available commands.",
     "notes": "Greet members added to a group thread. %1 = the new member, %2 = the thread name. selfMessage is sent when the BOT itself is added ({prefix} = the live prefix, %2 = the group name). Leave threadIDs empty for every thread, or list the thread IDs to limit it."
   },
   "leave": {
     "enable": false,
-    "message": "%1 left %2. \ud83d\udc4b",
+    "message": "%1 left %2. 👋",
     "threadIDs": [],
     "notes": "Announce members who leave or are removed from a group thread. %1 = the member, %2 = the thread name. Leave threadIDs empty for every thread."
   },
