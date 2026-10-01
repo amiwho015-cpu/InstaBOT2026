@@ -72,3 +72,12 @@ InstaBOT includes an embedded HTTP health check server on port `3000` (or `proce
 - `GET /` — Real-time status dashboard displaying bot uptime, memory usage, command metrics, and active connection status.
 - `GET /health` — JSON endpoint returning `{ status: "ok", uptime, botUserID, timestamp }` for cloud load balancers and container orchestrators (e.g. Render, Railway, AWS ECS, Fly.io).
 - `GET /ping` — Lightweight `200 OK` ping responder.
+
+## IGP engine (default)
+
+The default Instagram engine is `ica/src/igpClient.js`, built on `instagram-private-api` + `instagram_mqtt`.
+- Realtime = MQTT push (near-instant). The inbox is also polled as a safety net: every 30s while MQTT is up, every 4s (`ICA_POLL_MS`, min 2500) if MQTT is down. Failed MQTT reconnects automatically with backoff.
+- `ICA_REALTIME=0` = polling only. `ICA_ENGINE=legacy` = old ICA client.
+- Cookies come from `account.txt` / `ACCOUNT_COOKIE` (Netscape, JSON or raw string).
+- Typing indicator works only while MQTT is connected.
+- Not supported: nicknames, voice messages, stories/live/hashtag search.

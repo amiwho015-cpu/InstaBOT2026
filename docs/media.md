@@ -45,3 +45,9 @@ InstaBOT supports over 25 canvas-powered commands (e.g. `rank`, `couple`, `gay`,
 - Graphics are composited in memory using high-performance 2D context pipelines.
 - User avatars and remote assets are buffered asynchronously.
 - Output buffers are streamed directly to the Instagram media adapter with zero disk leaks.
+
+## Feed → MQTT bridge (optional)
+
+`bridge/igFeedBridge.js` polls the home timeline via `instagram-private-api` and publishes new posts to MQTT.
+Enable: `IG_FEED_BRIDGE=1`. Env: `MQTT_BROKER` (default `mqtt://broker.hivemq.com:1883`), `MQTT_TOPIC`, `FEED_POLL_MS` (min 30000, default 60000).
+Uses the same `account.txt` / `ACCOUNT_COOKIE` as the DM bot (Netscape, JSON or raw cookie string).

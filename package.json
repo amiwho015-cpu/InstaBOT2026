@@ -29,6 +29,8 @@
     "googleapis": "^173.0.0",
     "gradient-string": "^3.0.0",
     "https-proxy-agent": "^7.0.6",
+    "instagram-private-api": "^1.46.1",
+    "instagram_mqtt": "^1.2.2",
     "jimp": "^1.6.1",
     "lodash": "^4.18.1",
     "mal-scraper": "^2.13.2",

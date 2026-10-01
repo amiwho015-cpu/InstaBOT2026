@@ -15,7 +15,9 @@
  *   api.sendMessage('Hello!', threadID);
  */
 
-const InstagramChatAPI = require('./src/instagramChat');
+// Default engine: IGP (instagram-private-api). Set ICA_ENGINE=legacy to use the old ICA client.
+const USE_LEGACY = String(process.env.ICA_ENGINE || '').toLowerCase() === 'legacy';
+const InstagramChatAPI = USE_LEGACY ? require('./src/instagramChat') : require('./src/igpClient');
 const CookieUtils = require('./src/utils/cookies');
 const { setOptions } = require('./src/utils/setOptions');
 

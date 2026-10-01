@@ -108,6 +108,18 @@ async function main() {
 
 	const bot = createBot(config);
 
+	// Optional: Instagram feed -> MQTT bridge (instagram-private-api).
+	// Enable with IG_FEED_BRIDGE=1. Runs alongside the DM bot; never crashes it.
+	if (process.env.IG_FEED_BRIDGE === "1") {
+		try {
+			require("./bridge/igFeedBridge").startFeedBridge(config)
+				.catch(err => log.error("FEED", "Feed bridge failed to start", err));
+		}
+		catch (err) {
+			log.error("FEED", "Feed bridge module could not be loaded (run npm install)", err);
+		}
+	}
+
 	// A host like Render scans for an open port and marks a service that binds
 	// none as unhealthy. This tiny server satisfies that check and serves
 	// /health. Set PORT=0 to disable it (pure worker mode).
